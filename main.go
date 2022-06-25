@@ -26,7 +26,12 @@ func parseXML(file string) []Flight {
 	if err != nil {
 		log.Panic(err)
 	}
-	defer f.Close()
+	defer func(f *os.File) {
+		err := f.Close()
+		if err != nil {
+			log.Panic(err)
+		}
+	}(f)
 	decoder := xml.NewDecoder(f)
 	var flights []Flight
 	for {
