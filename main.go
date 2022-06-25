@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -100,7 +101,22 @@ func allFlights(flights [][]Flight) []byte {
 	return d
 }
 
+func ping(w http.ResponseWriter, req *http.Request) {
+	r, err := json.Marshal("Flight Service. Version 0.1")
+	if err != nil {
+		log.Panic(err)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(r)
+	if err != nil {
+		return
+	}
+}
+
 func main() {
 	flights := getFlights()
 	allFlights(flights)
+	log.Println("Server started")
+	http.HandleFunc("/ping", ping)
+	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
