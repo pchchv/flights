@@ -1,5 +1,8 @@
 ## HTTP Methods
 ```
+/ping — Checking the server connection
+```
+```
 /flights — All flight options from DXB to BKK
 ```
 ```
