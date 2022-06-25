@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"io"
 	"log"
@@ -79,7 +80,7 @@ func getFlights() [][]Flight {
 	return flights
 }
 
-func allFlights(flights [][]Flight) {
+func allFlights(flights [][]Flight) []byte {
 	var data [][]Flight
 	for _, v := range flights {
 		ft := 0
@@ -92,6 +93,11 @@ func allFlights(flights [][]Flight) {
 			data = append(data, v)
 		}
 	}
+	d, err := json.MarshalIndent(data, " ", "\t")
+	if err != nil {
+		log.Panic(err)
+	}
+	return d
 }
 
 func main() {
