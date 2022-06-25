@@ -74,6 +74,22 @@ func getFlights() [][]Flight {
 	return flights
 }
 
+func allFlights(flights [][]Flight) {
+	var data [][]Flight
+	for _, v := range flights {
+		ft := 0
+		for _, flight := range v {
+			if flight.Source == "DXB" || flight.Destination == "BKK" {
+				ft++
+			}
+		}
+		if ft == 2 {
+			data = append(data, v)
+		}
+	}
+}
+
 func main() {
 	flights := getFlights()
+	allFlights(flights)
 }
