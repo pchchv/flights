@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-/*type Flight struct {
+type Flight struct {
 	Carrier            string `xml:"Carrier"`
 	FlightNumber       int    `xml:"FlightNumber"`
 	Source             string `xml:"Source"`
@@ -19,10 +19,6 @@ import (
 	NumberOfStops      string `xml:"NumberOfStops"`
 	FareBasis          string `xml:"FareBasis"`
 	TicketType         string `xml:"TicketType"`
-}*/
-
-type Flight struct {
-	FareBasis string `xml:"FareBasis"`
 }
 
 func parseXML(file string) []Flight {
@@ -56,20 +52,28 @@ func parseXML(file string) []Flight {
 	return flights
 }
 
-func getFlights() []string {
-	var flights []string
+func getFlights() [][]Flight {
 	data := parseXML("RS_Via-3.xml")
 	data = append(data, parseXML("RS_ViaOW.xml")...)
-	fl := make(map[Flight]int)
+	var flights [][]Flight
 	for _, v := range data {
-		fl[v]++
-	}
-	for f, _ := range fl {
-		flights = append(flights, strings.TrimSpace(f.FareBasis))
+		if len(flights) == 0 {
+			flights = append(flights, []Flight{v})
+		} else {
+			for i, f := range flights {
+				if strings.TrimSpace(f[0].FareBasis) == strings.TrimSpace(v.FareBasis) {
+					flights[i] = append(flights[i], v)
+					break
+				}
+				if i == len(flights)-1 {
+					flights = append(flights, []Flight{v})
+				}
+			}
+		}
 	}
 	return flights
 }
 
 func main() {
-	log.Println(getFlights())
+	flights := getFlights()
 }
