@@ -11,6 +11,7 @@ import (
 )
 
 var flights [][]Flight
+var flightsJSON []byte
 
 type Flight struct {
 	Carrier            string `xml:"Carrier"`
@@ -80,11 +81,7 @@ func getFlights() [][]Flight {
 			}
 		}
 	}
-	return flights
-}
-
-func allFlights(flights [][]Flight) []byte {
-	var data [][]Flight
+	var d [][]Flight
 	for _, v := range flights {
 		ft := 0
 		for _, flight := range v {
@@ -93,14 +90,18 @@ func allFlights(flights [][]Flight) []byte {
 			}
 		}
 		if ft == 2 {
-			data = append(data, v)
+			d = append(d, v)
 		}
 	}
-	d, err := json.MarshalIndent(data, " ", "\t")
+	return d
+}
+
+func getJSON(data [][]Flight) []byte {
+	fl, err := json.MarshalIndent(data, " ", "\t")
 	if err != nil {
 		log.Panic(err)
 	}
-	return d
+	return fl
 }
 
 func ping(w http.ResponseWriter, req *http.Request) {
@@ -116,9 +117,8 @@ func ping(w http.ResponseWriter, req *http.Request) {
 }
 
 func toFlights(w http.ResponseWriter, req *http.Request) {
-	data := allFlights(flights)
 	w.Header().Set("Content-Type", "application/json")
-	_, err := w.Write(data)
+	_, err := w.Write(flightsJSON)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -126,6 +126,7 @@ func toFlights(w http.ResponseWriter, req *http.Request) {
 
 func main() {
 	flights = getFlights()
+	flightsJSON = getJSON(flights)
 	log.Println("Server started")
 	http.HandleFunc("/ping", ping)
 	http.HandleFunc("/flights", toFlights)
