@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+var flights [][]Flight
+
 type Flight struct {
 	Carrier            string `xml:"Carrier"`
 	FlightNumber       int    `xml:"FlightNumber"`
@@ -109,14 +111,23 @@ func ping(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write(r)
 	if err != nil {
-		return
+		log.Panic(err)
+	}
+}
+
+func toFlights(w http.ResponseWriter, req *http.Request) {
+	data := allFlights(flights)
+	w.Header().Set("Content-Type", "application/json")
+	_, err := w.Write(data)
+	if err != nil {
+		log.Panic(err)
 	}
 }
 
 func main() {
-	flights := getFlights()
-	allFlights(flights)
+	flights = getFlights()
 	log.Println("Server started")
 	http.HandleFunc("/ping", ping)
+	http.HandleFunc("/flights", toFlights)
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
