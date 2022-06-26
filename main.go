@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -27,7 +28,7 @@ type Flight struct {
 }
 
 type Price struct {
-	ServiceCharges string `xml:"ServiceCharges"`
+	ServiceCharges float64 `xml:"ServiceCharges"`
 }
 
 type Flights struct {
@@ -129,6 +130,30 @@ func getJSON(data []Flights) []byte {
 		fl = append(fl, f...)
 	}
 	return fl
+}
+
+func prices() (Flights, Flights) {
+	var expensive, cheap Flights
+	for i, f := range flights {
+		fmt.Println(f.price.ServiceCharges)
+		if i == 0 {
+			cheap = f
+		} else if i == 1 {
+			if f.price.ServiceCharges < cheap.price.ServiceCharges {
+				cheap, expensive = f, cheap
+			} else if f.price.ServiceCharges > cheap.price.ServiceCharges {
+				expensive = f
+			}
+		} else {
+			if expensive.price.ServiceCharges < f.price.ServiceCharges {
+				expensive = f
+			}
+			if cheap.price.ServiceCharges > f.price.ServiceCharges {
+				cheap = f
+			}
+		}
+	}
+	return cheap, expensive
 }
 
 func ping(w http.ResponseWriter, req *http.Request) {
