@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -115,7 +114,7 @@ func getFlights() []Flights {
 	return d
 }
 
-func getJSON(data []Flights) []byte {
+func getJSONArr(data []Flights) []byte {
 	var fl []byte
 	for _, v := range data {
 		f, err := json.MarshalIndent(v.flights, " ", "\t")
@@ -132,10 +131,29 @@ func getJSON(data []Flights) []byte {
 	return fl
 }
 
+func getJSON(flight Flights, pre string) []byte {
+	var fl []byte
+	pr, err := json.MarshalIndent(pre, "\n", "\t")
+	if err != nil {
+		log.Panic(err)
+	}
+	f, err := json.MarshalIndent(flight.flights, "  ", "\t")
+	if err != nil {
+		log.Panic(err)
+	}
+	p, err := json.MarshalIndent(flight.price, "  ", "\t")
+	if err != nil {
+		log.Panic(err)
+	}
+	fl = append(fl, pr...)
+	f = append(f, p...)
+	fl = append(fl, f...)
+	return fl
+}
+
 func prices() (Flights, Flights) {
 	var expensive, cheap Flights
 	for i, f := range flights {
-		fmt.Println(f.price.ServiceCharges)
 		if i == 0 {
 			cheap = f
 		} else if i == 1 {
@@ -176,11 +194,30 @@ func toFlights(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func options(w http.ResponseWriter, req *http.Request) {
+	// Need to add getting the fastest/longest and best option
+	ch, ex := prices()
+	cheap := getJSON(ch, "The cheapest flight: ")
+	expensive := getJSON(ex, "The most expensive flight: ")
+	cap, err := json.MarshalIndent("Options:", "\n\n", "\n")
+	if err != nil {
+		log.Panic(err)
+	}
+	res := append(cap, cheap...)
+	res = append(res, expensive...)
+	w.Header().Set("Content-Type", "application/json")
+	_, err = w.Write(res)
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
 func main() {
 	flights = getFlights()
-	flightsJSON = getJSON(flights)
+	flightsJSON = getJSONArr(flights)
 	log.Println("Server started")
 	http.HandleFunc("/ping", ping)
 	http.HandleFunc("/flights", toFlights)
+	http.HandleFunc("/options", options)
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
