@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var flights [][]Flight
+var flights []Flights
 var flightsJSON []byte
 
 type Flight struct {
@@ -26,7 +26,16 @@ type Flight struct {
 	TicketType         string `xml:"TicketType"`
 }
 
-func parseXML(file string) []Flight {
+type Price struct {
+	ServiceCharges string `xml:"ServiceCharges"`
+}
+
+type Flights struct {
+	flights []Flight
+	price   Price
+}
+
+func parseXML(file string) ([]Flight, []Price) {
 	f, err := os.Open(file)
 	if err != nil {
 		log.Panic(err)
@@ -39,11 +48,13 @@ func parseXML(file string) []Flight {
 	}(f)
 	decoder := xml.NewDecoder(f)
 	var flights []Flight
+	var prices []Price
 	for {
 		token, err := decoder.Token()
 		if err != nil || token == nil {
 			if err != io.EOF {
 				log.Panic(err)
+
 			}
 			break
 		}
@@ -57,16 +68,26 @@ func parseXML(file string) []Flight {
 				}
 				flights = append(flights, f)
 			}
+			if ty.Name.Local == "Pricing" {
+				var p Price
+				err := decoder.DecodeElement(&p, &ty)
+				if err != nil {
+					log.Panic(err)
+				}
+				prices = append(prices, p)
+			}
 		}
 	}
-	return flights
+	return flights, prices
 }
 
-func getFlights() [][]Flight {
-	data := parseXML("RS_Via-3.xml")
-	data = append(data, parseXML("RS_ViaOW.xml")...)
+func getFlights() []Flights {
+	fData, pData := parseXML("RS_Via-3.xml")
+	fd, pd := parseXML("RS_ViaOW.xml")
+	fData = append(fData, fd...)
+	pData = append(pData, pd...)
 	var flights [][]Flight
-	for _, v := range data {
+	for _, v := range fData {
 		if len(flights) == 0 {
 			flights = append(flights, []Flight{v})
 		} else {
@@ -81,25 +102,31 @@ func getFlights() [][]Flight {
 			}
 		}
 	}
-	var d [][]Flight
-	for _, v := range flights {
-		ft := 0
-		for _, flight := range v {
-			if flight.Source == "DXB" || flight.Destination == "BKK" {
-				ft++
+	var d []Flights
+	if len(flights) == len(pData) {
+		for i, fl := range flights {
+			if fl[0].Source == "DXB" || fl[0].Destination == "BKK" {
+				f := Flights{flights: flights[i], price: pData[i]}
+				d = append(d, f)
 			}
-		}
-		if ft == 2 {
-			d = append(d, v)
 		}
 	}
 	return d
 }
 
-func getJSON(data [][]Flight) []byte {
-	fl, err := json.MarshalIndent(data, " ", "\t")
-	if err != nil {
-		log.Panic(err)
+func getJSON(data []Flights) []byte {
+	var fl []byte
+	for _, v := range data {
+		f, err := json.MarshalIndent(v.flights, " ", "\t")
+		if err != nil {
+			log.Panic(err)
+		}
+		p, err := json.MarshalIndent(v.price, " ", "\t")
+		if err != nil {
+			log.Panic(err)
+		}
+		f = append(f, p...)
+		fl = append(fl, f...)
 	}
 	return fl
 }
