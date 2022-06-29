@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 var flights []Flights
@@ -172,6 +173,47 @@ func prices() (Flights, Flights) {
 		}
 	}
 	return cheap, expensive
+}
+
+func duration() (Flights, time.Duration, Flights, time.Duration) {
+	var fastest, longest Flights
+	var fdur, ldur time.Duration
+	for i, f := range flights {
+		dep, err := time.Parse("2006-01-02T1504", f.flights[0].DepartureTimeStamp)
+		if err != nil {
+			log.Panic(err)
+		}
+		ari, err := time.Parse("2006-01-02T1504", f.flights[len(f.flights)-1].ArrivalTimeStamp)
+		if err != nil {
+			log.Panic(err)
+		}
+		dur := ari.Sub(dep)
+		if i == 0 {
+			fdur = dur
+			fastest = f
+			continue
+		} else if i == 1 {
+			if fdur < dur {
+				ldur = fdur
+				longest = fastest
+				fdur = dur
+				fastest = f
+			} else {
+				ldur = dur
+				longest = f
+			}
+			continue
+		}
+		if fdur < dur {
+			fdur = dur
+			fastest = f
+		}
+		if ldur > dur {
+			ldur = dur
+			longest = f
+		}
+	}
+	return fastest, fdur, longest, ldur
 }
 
 func ping(w http.ResponseWriter, req *http.Request) {
