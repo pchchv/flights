@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -220,8 +219,11 @@ func duration() (Flights, time.Duration, Flights, time.Duration) {
 func optionsJSON() []byte {
 	fastest, fdur, longest, ldur := duration()
 	ch, ex := prices()
+	// Getting data on the cheapest and the most expensive flights
 	cheap := getJSON(ch, "The cheapest flight: ")
 	expensive := getJSON(ex, "The most expensive flight: ")
+
+	// Getting data on the fastest and slowest flights
 	fast := getJSON(fastest, "The fastest flight: ")
 	f := fmt.Sprintf("Its duration: %v", fdur)
 	fa, err := json.MarshalIndent(f, "\n\n", "\n")
@@ -236,6 +238,8 @@ func optionsJSON() []byte {
 		log.Panic(err)
 	}
 	long = append(long, lo...)
+
+	// Collecting data in one JSON
 	cap, err := json.MarshalIndent("Options:", "\n\n", "\n")
 	if err != nil {
 		log.Panic(err)
@@ -247,41 +251,8 @@ func optionsJSON() []byte {
 	return res
 }
 
-func ping(w http.ResponseWriter, req *http.Request) {
-	r, err := json.Marshal("Flight Service. Version 0.1")
-	if err != nil {
-		log.Panic(err)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(r)
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
-func toFlights(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	_, err := w.Write(flightsJSON)
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
-func options(w http.ResponseWriter, req *http.Request) {
-	// Need to add getting the fastest/longest and best option
-	w.Header().Set("Content-Type", "application/json")
-	_, err := w.Write(optionsJSON())
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
 func main() {
 	flights = getFlights()
 	flightsJSON = getJSONArr(flights)
-	log.Println("Server started")
-	http.HandleFunc("/ping", ping)
-	http.HandleFunc("/flights", toFlights)
-	http.HandleFunc("/options", options)
-	log.Fatal(http.ListenAndServe("localhost:8080", nil))
+	server()
 }
