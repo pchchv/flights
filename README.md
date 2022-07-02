@@ -6,7 +6,13 @@
 /flights — All flight options from DXB to BKK
 ```
 ```
-/options — The most expensive/cheapest, fastest/longest and best flight options
+/variants — The most expensive/cheapest, fastest/longest and best flight variants
+options: 
+    duration — Fastest/longest options
+    optimal — Best option
+    price — Most expensive/cheapest options
+    
+example: http://localhost:8080/variants?optinons=duration,optimal,price
 ```
 ```
 /difference — Differences between the results of the two previous queries

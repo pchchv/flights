@@ -225,43 +225,45 @@ func optimalFlight() Flights {
 	return optimal
 }
 
-func optionsJSON() []byte {
-	fastest, minDuration, longest, maxDuration := duration()
-	ch := flights[0]
-	ex := flights[len(flights)-1]
-	// Getting data on the cheapest and the most expensive flights
-	cheap := getJSON(ch, "The cheapest flight: ")
-	expensive := getJSON(ex, "The most expensive flight: ")
-
-	// Getting data on the fastest and slowest flights
-	fast := getJSON(fastest, "The fastest flight: ")
-	f := fmt.Sprintf("Its duration: %v", minDuration)
-	fa, err := json.MarshalIndent(f, "\n\n", "\n")
+func optionsJSON(opt string) []byte {
+	res, err := json.MarshalIndent("Options:", "\n\n", "\n")
 	if err != nil {
 		log.Panic(err)
 	}
-	fast = append(fast, fa...)
-	long := getJSON(longest, "The longest flight: ")
-	l := fmt.Sprintf("Its duration: %v", maxDuration)
-	lo, err := json.MarshalIndent(l, "\n\n", "\n")
-	if err != nil {
-		log.Panic(err)
+	if strings.Contains(opt, "price") || opt == "" {
+		// Getting data on the cheapest and the most expensive flights
+		ch := flights[0]
+		ex := flights[len(flights)-1]
+		cheap := getJSON(ch, "The cheapest flight: ")
+		expensive := getJSON(ex, "The most expensive flight: ")
+		res = append(res, cheap...)
+		res = append(res, expensive...)
 	}
-	long = append(long, lo...)
-
-	// Getting optimal flight
-	optimal := getJSON(optimalFlight(), "Optimal flight:")
-
-	// Collecting data in one JSON
-	sign, err := json.MarshalIndent("Options:", "\n\n", "\n")
-	if err != nil {
-		log.Panic(err)
+	if strings.Contains(opt, "duration") || opt == "" {
+		// Getting data on the fastest and slowest flights
+		fastest, minDuration, longest, maxDuration := duration()
+		fast := getJSON(fastest, "The fastest flight: ")
+		f := fmt.Sprintf("Its duration: %v", minDuration)
+		fa, err := json.MarshalIndent(f, "\n\n", "\n")
+		if err != nil {
+			log.Panic(err)
+		}
+		fast = append(fast, fa...)
+		long := getJSON(longest, "The longest flight: ")
+		l := fmt.Sprintf("Its duration: %v", maxDuration)
+		lo, err := json.MarshalIndent(l, "\n\n", "\n")
+		if err != nil {
+			log.Panic(err)
+		}
+		long = append(long, lo...)
+		res = append(res, fast...)
+		res = append(res, long...)
 	}
-	res := append(sign, cheap...)
-	res = append(res, expensive...)
-	res = append(res, fast...)
-	res = append(res, long...)
-	res = append(res, optimal...)
+	if strings.Contains(opt, "optimal") || opt == "" {
+		// Getting optimal flight
+		optimal := getJSON(optimalFlight(), "Optimal flight:")
+		res = append(res, optimal...)
+	}
 	return res
 }
 

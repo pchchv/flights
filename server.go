@@ -26,10 +26,10 @@ func toFlights(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func options(w http.ResponseWriter, req *http.Request) {
-	// Need to add getting the best option
+func variants(w http.ResponseWriter, req *http.Request) {
+	opt := req.URL.Query().Get("options")
 	w.Header().Set("Content-Type", "application/json")
-	_, err := w.Write(optionsJSON())
+	_, err := w.Write(optionsJSON(opt))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -39,6 +39,6 @@ func server() {
 	log.Println("Server started!")
 	http.HandleFunc("/ping", ping)
 	http.HandleFunc("/flights", toFlights)
-	http.HandleFunc("/options", options)
+	http.HandleFunc("/variants", variants)
 	log.Fatal(http.ListenAndServe("localhost:8080", nil))
 }
