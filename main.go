@@ -159,49 +159,53 @@ func getJSON(flight Flights, pre string) []byte {
 	return fl
 }
 
+func getDuration(flight Flights) time.Duration {
+	dep, err := time.Parse("2006-01-02T1504", flight.flights[0].DepartureTimeStamp)
+	if err != nil {
+		log.Panic(err)
+	}
+	ari, err := time.Parse("2006-01-02T1504", flight.flights[len(flight.flights)-1].ArrivalTimeStamp)
+	if err != nil {
+		log.Panic(err)
+	}
+	return ari.Sub(dep)
+}
+
 func duration() (Flights, time.Duration, Flights, time.Duration) {
 	var fastest, longest Flights
-	var fdur, ldur time.Duration
+	var minDuration, maxDuration time.Duration
 	for i, f := range flights {
-		dep, err := time.Parse("2006-01-02T1504", f.flights[0].DepartureTimeStamp)
-		if err != nil {
-			log.Panic(err)
-		}
-		ari, err := time.Parse("2006-01-02T1504", f.flights[len(f.flights)-1].ArrivalTimeStamp)
-		if err != nil {
-			log.Panic(err)
-		}
-		dur := ari.Sub(dep)
+		dur := getDuration(f)
 		if i == 0 {
-			fdur = dur
+			minDuration = dur
 			fastest = f
 			continue
 		} else if i == 1 {
-			if fdur < dur {
-				ldur = fdur
+			if minDuration < dur {
+				maxDuration = minDuration
 				longest = fastest
-				fdur = dur
+				minDuration = dur
 				fastest = f
 			} else {
-				ldur = dur
+				maxDuration = dur
 				longest = f
 			}
 			continue
 		}
-		if fdur < dur {
-			fdur = dur
+		if minDuration < dur {
+			minDuration = dur
 			fastest = f
 		}
-		if ldur > dur {
-			ldur = dur
+		if maxDuration > dur {
+			maxDuration = dur
 			longest = f
 		}
 	}
-	return fastest, fdur, longest, ldur
+	return fastest, minDuration, longest, maxDuration
 }
 
 func optionsJSON() []byte {
-	fastest, fdur, longest, ldur := duration()
+	fastest, minDuration, longest, maxDuration := duration()
 	ch := flights[0]
 	ex := flights[len(flights)-1]
 	// Getting data on the cheapest and the most expensive flights
@@ -210,14 +214,14 @@ func optionsJSON() []byte {
 
 	// Getting data on the fastest and slowest flights
 	fast := getJSON(fastest, "The fastest flight: ")
-	f := fmt.Sprintf("Its duration: %v", fdur)
+	f := fmt.Sprintf("Its duration: %v", minDuration)
 	fa, err := json.MarshalIndent(f, "\n\n", "\n")
 	if err != nil {
 		log.Panic(err)
 	}
 	fast = append(fast, fa...)
 	long := getJSON(longest, "The longest flight: ")
-	l := fmt.Sprintf("Its duration: %v", ldur)
+	l := fmt.Sprintf("Its duration: %v", maxDuration)
 	lo, err := json.MarshalIndent(l, "\n\n", "\n")
 	if err != nil {
 		log.Panic(err)
@@ -225,11 +229,11 @@ func optionsJSON() []byte {
 	long = append(long, lo...)
 
 	// Collecting data in one JSON
-	cap, err := json.MarshalIndent("Options:", "\n\n", "\n")
+	o, err := json.MarshalIndent("Options:", "\n\n", "\n")
 	if err != nil {
 		log.Panic(err)
 	}
-	res := append(cap, cheap...)
+	res := append(o, cheap...)
 	res = append(res, expensive...)
 	res = append(res, fast...)
 	res = append(res, long...)
