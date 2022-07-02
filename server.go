@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-func ping(w http.ResponseWriter, req *http.Request) {
-	r, err := json.Marshal("Flight Service. Version 0.1")
+func ping(w http.ResponseWriter, _ *http.Request) {
+	r, err := json.Marshal("Flight Service. Version 0.2")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -18,7 +18,7 @@ func ping(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func toFlights(w http.ResponseWriter, req *http.Request) {
+func toFlights(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err := w.Write(flightsJSON)
 	if err != nil {

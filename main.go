@@ -230,7 +230,10 @@ func optionsJSON(opt string) []byte {
 	if err != nil {
 		log.Panic(err)
 	}
-	if strings.Contains(opt, "price") || opt == "" {
+	if opt == "" {
+		opt = "duration,optimal,price"
+	}
+	if strings.Contains(opt, "price") {
 		// Getting data on the cheapest and the most expensive flights
 		ch := flights[0]
 		ex := flights[len(flights)-1]
@@ -239,7 +242,7 @@ func optionsJSON(opt string) []byte {
 		res = append(res, cheap...)
 		res = append(res, expensive...)
 	}
-	if strings.Contains(opt, "duration") || opt == "" {
+	if strings.Contains(opt, "duration") {
 		// Getting data on the fastest and slowest flights
 		fastest, minDuration, longest, maxDuration := duration()
 		fast := getJSON(fastest, "The fastest flight: ")
@@ -259,7 +262,7 @@ func optionsJSON(opt string) []byte {
 		res = append(res, fast...)
 		res = append(res, long...)
 	}
-	if strings.Contains(opt, "optimal") || opt == "" {
+	if strings.Contains(opt, "optimal") {
 		// Getting optimal flight
 		optimal := getJSON(optimalFlight(), "Optimal flight:")
 		res = append(res, optimal...)
