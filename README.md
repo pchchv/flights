@@ -1,3 +1,15 @@
+# Running the application
+```
+docker-compose up --build
+```
+# Running the application without Docker
+```azure
+go run .
+```
+## Running tests (app must be running)
+```
+go test
+```
 ## HTTP Methods
 ```
 /ping — Checking the server connection
@@ -13,7 +25,4 @@ options:
     price — Most expensive/cheapest options
     
 example: http://localhost:8080/variants?optinons=duration,optimal,price
-```
-```
-/difference — Differences between the results of the two previous queries
 ```
