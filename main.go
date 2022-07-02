@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 	"strings"
 	"time"
 )
@@ -35,6 +36,12 @@ type Flights struct {
 	flights []Flight
 	price   Price
 }
+
+type ByPrice []Flights
+
+func (a ByPrice) Len() int           { return len(a) }
+func (a ByPrice) Less(i, j int) bool { return a[i].price.ServiceCharges < a[j].price.ServiceCharges }
+func (a ByPrice) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 func parseXML(file string) ([]Flight, []Price) {
 	f, err := os.Open(file)
@@ -152,29 +159,6 @@ func getJSON(flight Flights, pre string) []byte {
 	return fl
 }
 
-func prices() (Flights, Flights) {
-	var expensive, cheap Flights
-	for i, f := range flights {
-		if i == 0 {
-			cheap = f
-		} else if i == 1 {
-			if f.price.ServiceCharges < cheap.price.ServiceCharges {
-				cheap, expensive = f, cheap
-			} else if f.price.ServiceCharges > cheap.price.ServiceCharges {
-				expensive = f
-			}
-		} else {
-			if expensive.price.ServiceCharges < f.price.ServiceCharges {
-				expensive = f
-			}
-			if cheap.price.ServiceCharges > f.price.ServiceCharges {
-				cheap = f
-			}
-		}
-	}
-	return cheap, expensive
-}
-
 func duration() (Flights, time.Duration, Flights, time.Duration) {
 	var fastest, longest Flights
 	var fdur, ldur time.Duration
@@ -218,7 +202,8 @@ func duration() (Flights, time.Duration, Flights, time.Duration) {
 
 func optionsJSON() []byte {
 	fastest, fdur, longest, ldur := duration()
-	ch, ex := prices()
+	ch := flights[0]
+	ex := flights[len(flights)-1]
 	// Getting data on the cheapest and the most expensive flights
 	cheap := getJSON(ch, "The cheapest flight: ")
 	expensive := getJSON(ex, "The most expensive flight: ")
@@ -254,5 +239,6 @@ func optionsJSON() []byte {
 func main() {
 	flights = getFlights()
 	flightsJSON = getJSONArr(flights)
+	sort.Sort(ByPrice(flights))
 	server()
 }
