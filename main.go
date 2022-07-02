@@ -204,6 +204,27 @@ func duration() (Flights, time.Duration, Flights, time.Duration) {
 	return fastest, minDuration, longest, maxDuration
 }
 
+func optimalFlight() Flights {
+	var optimal Flights
+	var optimalDuration time.Duration
+	for i, f := range flights {
+		if i == 0 {
+			optimal = f
+			optimalDuration = getDuration(f)
+		} else if i <= 5 {
+			dur := getDuration(f)
+			if dur < optimalDuration {
+				optimal = f
+				optimalDuration = dur
+			}
+		}
+		if i >= 5 {
+			break
+		}
+	}
+	return optimal
+}
+
 func optionsJSON() []byte {
 	fastest, minDuration, longest, maxDuration := duration()
 	ch := flights[0]
@@ -228,15 +249,19 @@ func optionsJSON() []byte {
 	}
 	long = append(long, lo...)
 
+	// Getting optimal flight
+	optimal := getJSON(optimalFlight(), "Optimal flight:")
+
 	// Collecting data in one JSON
-	o, err := json.MarshalIndent("Options:", "\n\n", "\n")
+	sign, err := json.MarshalIndent("Options:", "\n\n", "\n")
 	if err != nil {
 		log.Panic(err)
 	}
-	res := append(o, cheap...)
+	res := append(sign, cheap...)
 	res = append(res, expensive...)
 	res = append(res, fast...)
 	res = append(res, long...)
+	res = append(res, optimal...)
 	return res
 }
 
