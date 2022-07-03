@@ -3,7 +3,7 @@
 docker-compose up --build
 ```
 # Running the application without Docker
-```azure
+```
 go run .
 ```
 ## Running tests (app must be running)
